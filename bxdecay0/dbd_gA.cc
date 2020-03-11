@@ -524,7 +524,6 @@ namespace bxdecay0 {
 	  _pimpl_->tab_pdf.e_sampling[0] = tabulated_pdf_type::SAMPLING_CUMULATIVE;
 	  _pimpl_->tab_pdf.e_sampling[1] = tabulated_pdf_type::SAMPLING_CUMULATIVE;
 
-	  ///nsampels doesnt exist here
 	  line_in >> _pimpl_->tab_pdf.e_min[0]
 		  >> _pimpl_->tab_pdf.e_max[0]
 		  >> _pimpl_->tab_pdf.energy_step
@@ -827,17 +826,16 @@ namespace bxdecay0 {
 	    if((fabs(rand - _pimpl_->tab_pdf.bound[i][0]) <= 5*pow(10,-7)) ||( fabs(rand - _pimpl_->tab_pdf.bound[i][1])<= 5*pow(10,-7)))
 	    {
 	      if((rand - _pimpl_->tab_pdf.bound[i][0] <= 5* pow(10,-7))){
-		e1_ = _pimpl_->tab_pdf.energies[i];//_pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * (i);
-		e2_ = _pimpl_->tab_pdf.energies[0];//_pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * (0);
+		e1_ = _pimpl_->tab_pdf.energies[i];
+		e2_ = _pimpl_->tab_pdf.energies[0];
 	      std::cout <<  _pimpl_->tab_pdf.energies[i] << "  " << _pimpl_->tab_pdf.energies[0] << " bounds " << rand << "  " <<  _pimpl_->tab_pdf.bound[i][0] <<  std::endl;
 	      count ++;
 	      _pimpl_->tab_pdf.iteration++;
 	      break;
 	      }
 	      else if((rand - _pimpl_->tab_pdf.bound[i][1] <=  5*pow(10,-7))){
-		e1_ =  _pimpl_->tab_pdf.energies[i];//_pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * (i);
-		e2_ =  _pimpl_->tab_pdf.energies[_pimpl_->tab_pdf.save_probability[i].size()-1];//_pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * (_pimpl_->tab_pdf.save_probability[i].size());
-		//std::cout << _pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * i << "  " << _pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * _pimpl_->tab_pdf.save_probability[i].size() << "  " << _pimpl_->tab_pdf.save_probability[i][_pimpl_->tab_pdf.save_probability[i].size()] << " bounds " << rand << "  " <<  _pimpl_->tab_pdf.bound[i][1] <<  std::endl;
+		e1_ =  _pimpl_->tab_pdf.energies[i];
+		e2_ =  _pimpl_->tab_pdf.energies[_pimpl_->tab_pdf.save_probability[i].size()-1];
 		std::cout <<  _pimpl_->tab_pdf.energies[i] << "  " <<  _pimpl_->tab_pdf.energies[_pimpl_->tab_pdf.save_probability[i].size()-1] << " bounds " << rand << "  " <<  _pimpl_->tab_pdf.bound[i][1] <<  std::endl;
 		count ++;
 		_pimpl_->tab_pdf.iteration++;
@@ -860,10 +858,8 @@ namespace bxdecay0 {
 		}
 		else if(j == _pimpl_->tab_pdf.save_probability[i].size() -1 )
 		  {
-		    e1_ =  _pimpl_->tab_pdf.energies[i_iter];//_pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * (i_iter);
-		    e2_ =  _pimpl_->tab_pdf.energies[j_iter];//_pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * j_iter;
-		    //_pimpl_->tab_pdf.prob.push_back(_pimpl_->tab_pdf.save_probability[i_iter][j_iter]);
-		    //std::cout << _pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * i_iter << "  " << _pimpl_->tab_pdf.e_min[0] + _pimpl_->tab_pdf.energy_step * j_iter << "  RAND = "<< rand<< "  "  << _pimpl_->tab_pdf.save_probability[i_iter][j_iter]  <<  std::endl;
+		    e1_ =  _pimpl_->tab_pdf.energies[i_iter];
+		    e2_ =  _pimpl_->tab_pdf.energies[j_iter];
 		    std::cout <<   _pimpl_->tab_pdf.energies[i_iter] << "  " <<   _pimpl_->tab_pdf.energies[j_iter] << "  RAND = "<< rand<< "  "  << _pimpl_->tab_pdf.save_probability[i_iter][j_iter]  <<  std::endl;
 		    _pimpl_->tab_pdf.iteration++;
 		    count ++;
@@ -876,15 +872,9 @@ namespace bxdecay0 {
 	    }
     
     std::cout << "count" << count << "  iteration = " <<  _pimpl_->tab_pdf.iteration << std::endl;
-	//if(_pimpl_->tab_pdf.e_samples[1].size()-1 != samp)  std::cout << "samp  " << samp << "  vector  " << _pimpl_->tab_pdf.e_samples[1].size() << "  rand  " << rand << std::endl;
-	//if(samp % 100 == 0 || samp == _number_-1)std::cout << " Number of proceessed energies " << samp << " samples vector size =  " << _pimpl_->tab_pdf.e_samples[0].size() << std::endl;
-	
-     
+
   }
-  /////////////////////////////////////////////////////////////////////////////////////////////
-
   
-
   // static
   void dbd_gA::export_to_event(i_random & prng_,
                                const double e1_,
