@@ -887,7 +887,7 @@ namespace bxdecay0 {
 	    if(count !=0) break;
 	    }
     
-    std::cout << "count" << count << "  iteration = " <<  _pimpl_->tab_pdf.iteration << std::endl;
+    std::cout << "count = " << count << "  iteration = " <<  _pimpl_->tab_pdf.iteration << std::endl;
 
   }
   
