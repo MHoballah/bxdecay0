@@ -30,7 +30,7 @@
 #include <math.h>
 // This project:
 #include <bxdecay0/resource.h>
-
+#include <bxdecay0/event.h>
 // Third party:
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_interp2d.h>
@@ -69,6 +69,7 @@ namespace {
     double energy_step;
     unsigned int prob_samples; ///< Number of samples to be generated
     unsigned int iteration = 0;
+
   };
 
   /// \brief p.d.f. interpolator
@@ -611,7 +612,7 @@ namespace bxdecay0 {
 	 {
 	   std::ostringstream outs_beta;
 	   outs_beta << "data/dbd_gA/" << _nuclide_ << '/' << process_label(_process_) << '/'
-		<< "Beta.data";
+		     << "Beta.data";
 	   _tabulated_beta_file_path_ = outs_beta.str();
 	   std::string fres_beta = get_resource(_tabulated_beta_file_path_, true);
 	   _tabulated_beta_file_path_ = fres_beta;
@@ -622,69 +623,71 @@ namespace bxdecay0 {
 	   throw std::logic_error("bxdecay0::dbd_gA::_load_tabulated_pdf_: Cannot open beta file '"
 				  + _tabulated_beta_file_path_ + "'!");
 	 }
-	 
-	  if (debug) {
-        std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: raw_line = <" << raw_line << '>' << std::endl;
-	}
-      if (raw_line.size() == 0) {
-        if (debug) {
-          std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip blank line." << std::endl;
-        }
-        continue;
-      }
-      {
-        std::string first_word;
-        std::istringstream ins(raw_line);
-        ins >> first_word;
-        if (first_word[0] == '#') {
-          if (debug) {
-            std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip comment line." << std::endl;
-          }
-          continue;
-        }
-      }
-      while(f_tab_beta){
-	std::getline(f_tab_pdf, raw_line);
-        std::istringstream line_ins(raw_line);
-	{
-        std::string first_word;
-        std::istringstream ins(raw_line);
-        ins >> first_word;
-        if (first_word[0] == '#') {
-          if (debug) {
-            std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip comment line." << raw_line<< std::endl;
-          }
-          continue;
-        }
-	}
-	std::vector<double> args;
-	std::vector<double> front_back;
-	for(;line_ins >> line;){
-	  if(count == 0)
-	    _pimpl_->tab_pdf.energies.push_back(atof(line.c_str()));
+	 while(f_tab_beta){
+	 std::string raw_line;
+	 std::getline(f_tab_beta, raw_line);
+      
+	 if (debug) {
+	   std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: raw_line = <" << raw_line << '>' << std::endl;
+	 }
+	 if (raw_line.size() == 0) {
+	   if (debug) {
+	     std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip blank line." << std::endl;
+	   }
+	   continue;
+	 }
+	 {
+	   std::string first_word;
+	   std::istringstream ins(raw_line);
+	   ins >> first_word;
+	   if (first_word[0] == '#') {
+	     if (debug) {
+	       std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip comment line." << std::endl;
+	     }
+	     continue;
+	   }
+	 }
+	 while(f_tab_beta){
+	   std::getline(f_tab_beta, raw_line);
+	   std::istringstream line_ins(raw_line);
+	   {
+	     std::string first_word;
+	     std::istringstream ins(raw_line);
+	     ins >> first_word;
+	     if (first_word[0] == '#') {
+	       if (debug) {
+		 std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip comment line." << raw_line<< std::endl;
+	       }
+	       continue;
+	     }
+	   }
+	   std::vector<double> args;
+	   std::vector<double> front_back;
+	   for(;line_ins >> line;){
+	     if(count == 0)
+	       _pimpl_->tab_pdf.energies.push_back(atof(line.c_str()));
 
-	  else args.push_back(atof(line.c_str()));
-	}
-	count++;
-	if(count == 1) continue;
-	front_back.push_back(args.front());
-	front_back.push_back(args.back());
-	_pimpl_->tab_pdf.bound.push_back(front_back);
+	     else args.push_back(atof(line.c_str()));
+	   }
+	   count++;
+	   if(count == 1) continue;
+	   front_back.push_back(args.front());
+	   front_back.push_back(args.back());
+	   _pimpl_->tab_pdf.bound.push_back(front_back);
 
-	_pimpl_->tab_pdf.save_probability.push_back(args);
+	   _pimpl_->tab_pdf.save_probability.push_back(args);
 	
 
-	if (f_tab_pdf.eof()) {
-	  if (debug) {
-	    std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: End of parsing input." << std::endl;
-	  }
-	  break;
-	}
-	}
-      
+	   if (f_tab_pdf.eof()) {
+	     if (debug) {
+	       std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: End of parsing input." << std::endl;
+	     }
+	     break;
+	   }
+	 }
+       }
        }*/
-
-     
+       
      return;
   }
    
@@ -752,7 +755,7 @@ namespace bxdecay0 {
     return;
   }
 
-  void dbd_gA::shoot_cos_theta(i_random & prng_, const double e1_, const double e2_, double & cos12_)
+  void dbd_gA::shoot_cos_theta(i_random & prng_, const double e1_, const double e2_, double & cos12_, event & ev1_)
   { 
     static const double emass = decay0_emass(); //MeV
     static const double PI = 3.14159265;
@@ -768,23 +771,36 @@ namespace bxdecay0 {
     double c = 0.;
     
     double romaxt = a + std::abs(b) + c;
-    double phi1;
-    double ctet1;
-    double stet1;
-    double phi2;
-    double ctet2;
-    double stet2;
-    //double cos12_;
+    double phi1, phi2;
+    double ctet1, ctet2;
+    double stet1, stet2;
     do {
       phi1 = twopi * prng_();
       ctet1 = 1. - 2. * prng_();
       stet1 = std::sqrt(1. - ctet1 * ctet1);
       phi2 = twopi * prng_();
-      ctet2 = 1. - 2. * prng_();
+     ctet2 = 1. - 2. * prng_();
       stet2 = std::sqrt(1. - ctet2 * ctet2);
-      cos12_ = ctet1 * ctet2 + stet1 * stet2 * std::cos(phi1 - phi2);
+      cos12_ =ctet1 * ctet2 + stet1 * stet2 * std::cos(phi1 - phi2);
     }
     while (romaxt * prng_() > a + b * cos12_ + c * std::pow(cos12_,2));
+    
+    // Clear the target event
+    ev1_.reset();
+    ev1_.set_generator("dbd_gA"); // Useful information (not mandatory)
+    ev1_.set_time(0.0); // Default decay time set to zero (unit: second)
+    particle particle;
+    particle.set_time(0.);
+    particle.set_code(ELECTRON);
+    particle.set_momentum(p1 * stet1 * std::cos(phi1),
+			  p1 * stet1 * std::sin(phi1),
+			  p1 * ctet1);
+    ev1_.add_particle(particle);
+    // Second electron/positron :
+    particle.set_momentum(p2 * stet2 * std::cos( phi2),
+			  p2 * stet2 * std::sin(phi2),
+			  p2 * ctet2);
+    ev1_.add_particle(particle);
     return;
   }
    
@@ -876,23 +892,37 @@ namespace bxdecay0 {
   }
   
   // static
-  void dbd_gA::export_to_event(i_random & prng_,
+  /*void dbd_gA::export_to_event(i_random & prng_,
                                const double e1_,
                                const double e2_,
                                const double cos12_,
                                event & ev_)
   {
+    
     // Clear the target eventd
     ev_.reset();
     ev_.set_generator("dbd_gA"); // Useful information (not mandatory)
     ev_.set_time(0.0); // Default decay time set to zero (unit: second)
-     
+    particle particle;
+    particle.set_time(0.);
+    particle.set_code(ELECTRON);
+    particle.set_momentum(p1 * stet1 * std::cos(phi1),
+			  p1 * stet1 * std::sin(phi1),
+			  p1 * ctet1);
+    ev_.add_particle(particle);
+
+    // Second electron/positron :
+    particle.set_momentum(p2 * stet2 * std::cos( phi2),
+			  p2 * stet2 * std::sin(phi2),
+			  p2 * ctet2);
+    ev_.add_particle(particle);
+    
     // Fill the event with two beta particles and the proper
     // kinematics and randomize the emission direction...
     // See "bxdecay0/event.h" and "bxdecay0/particle.h".
 
     return;
-  }
+    }*/
 
 
 } // end of namespace bxdecay0

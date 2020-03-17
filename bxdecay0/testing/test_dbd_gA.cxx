@@ -78,14 +78,14 @@ void test1()
     double e2;
     double cos12;
     gA_generator.shoot_e1_e2(prng, e1, e2);
-    gA_generator.shoot_cos_theta(prng, e1, e2, cos12);
+    bxdecay0::event decay;
+    gA_generator.shoot_cos_theta(prng, e1, e2, cos12, decay);
     fout1 << e1 <<  std::endl;
     fout2 << e2 <<  std::endl;
     double esum = e1 + e2;
     fout3 << esum << std::endl;
     fout4 << cos12 << std::endl;
-    bxdecay0::event decay;
-    bxdecay0::dbd_gA::export_to_event(prng, e1, e2, cos12, decay); // Not implemented yet
+    //bxdecay0::dbd_gA::export_to_event(prng, e1, e2, cos12, decay); // Not implemented yet
     decay.print(std::cerr, "DBD-gA event:", "[debug] ");
     }
   }

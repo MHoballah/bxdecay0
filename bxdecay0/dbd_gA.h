@@ -91,7 +91,7 @@ namespace bxdecay0 {
     void shoot_e1_e2(i_random & prng_, double & e1_, double & e2_);
 
     /// Randomize the cosine of the angle between the emitted electrons' impulsions
-    void shoot_cos_theta(i_random & prng_, const double e1_, const double e2_, double & theta_);
+    void shoot_cos_theta(i_random & prng_, const double e1_, const double e2_, double & theta_, event & ev1_);
 
     /// Set the number of simulated events
     //void set_number_simulated(const unsigned int number_);
@@ -120,7 +120,7 @@ namespace bxdecay0 {
                                 const double cos12_,
                                 event & ev_);
 
-    //bool verify_CP_simulation (bool & verify_) const;
+    bool verify_CP_simulation (bool & verify_) const;
 
     
   private:
@@ -141,13 +141,13 @@ namespace bxdecay0 {
     std::string  _nuclide_; ///< DBD emitter nuclide
     process_type _process_ = PROCESS_UNDEF; ///< Process
     shooting_type _shooting_ = SHOOTING_UNDEF; ///< Shooting method
-    //bool _verify_ = false; //< for verification method
+    bool _verify_ = false; //< for verification method
     //unsigned int _number_ = 0; // Number of smulated events 
-      
+
     // Working data:
     bool _initialized_ = false; ///< Initialization flag
     std::string _tabulated_pdf_file_path_; ///< Effective path for the tabulated p.d.f. file
-    //std::string _tabulated_beta_file_path_; ///< Effective path for the tabulated p.d.f. file
+    std::string _tabulated_beta_file_path_; ///< Effective path for the tabulated p.d.f. file
 
     // The machinery for tabulated p.d.f. management and interpolation
     // is hidden using the "PIMPL" idiom.

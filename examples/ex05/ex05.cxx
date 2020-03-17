@@ -18,7 +18,7 @@ int main()
 
   bxdecay0::dbd_gA gA_generator;
   gA_generator.set_nuclide("Se82");
-  gA_generator.set_process(bxdecay0::dbd_gA::PROCESS_G2);
+  gA_generator.set_process(bxdecay0::dbd_gA::PROCESS_G0);
   //gA_generator.set_shooting(bxdecay0::dbd_gA::SHOOTING_REJECTION);
   gA_generator.set_shooting(bxdecay0::dbd_gA::SHOOTING_INVERSE_TRANSFORM_METHOD);
   gA_generator.initialize();
@@ -31,21 +31,21 @@ int main()
     std::ofstream fout3("bxdecay0_ex05_3.data");
     std::ofstream fout4("bxdecay0_ex05_4.data");
 
-    unsigned int numb = 10000;
+    unsigned int numb = 100000;
     for(unsigned int i=0; i < numb; i++){
       
     double e1;
     double e2;
     double cos12;
     gA_generator.shoot_e1_e2(prng, e1, e2);
-    gA_generator.shoot_cos_theta(prng, e1, e2, cos12);
+    bxdecay0::event decay;
+    gA_generator.shoot_cos_theta(prng, e1, e2, cos12, decay);
     fout1 << e1 <<  std::endl;
     fout2 << e2 <<  std::endl;
     double esum = e1 + e2;
     fout3 << esum << std::endl;
     fout4 << cos12 << std::endl;
-    bxdecay0::event decay;
-    bxdecay0::dbd_gA::export_to_event(prng, e1, e2, cos12, decay); // Not implemented yet
+    //bxdecay0::dbd_gA::export_to_event(prng, e1, e2, cos12, decay); // Not implemented yet
     decay.print(std::cerr, "DBD-gA event:", "[debug] ");
     }
   }
