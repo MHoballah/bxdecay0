@@ -31,7 +31,7 @@ int main()
     std::ofstream fout3("bxdecay0_ex05_3.data");
     std::ofstream fout4("bxdecay0_ex05_4.data");
 
-    unsigned int numb = 100000;
+    unsigned int numb = 10000;
     for(unsigned int i=0; i < numb; i++){
       
     double e1;

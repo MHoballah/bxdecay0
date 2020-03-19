@@ -67,7 +67,8 @@ namespace {
     std::vector<std::vector<double>> bound;
     std::vector<double> energies;
     double energy_step;
-    unsigned int prob_samples; ///< Number of samples to be generated
+    unsigned int prob_samples;
+    double proba, beta=0, sum_proba =0;;
     unsigned int iteration = 0;
 
   };
@@ -605,89 +606,6 @@ namespace bxdecay0 {
 	   << std::to_string(_pimpl_->tab_pdf.e_max[0]) << " MeV" << std::endl;
 	   std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: E sampling is parsed." << std::endl;
 	   }
-
-
-     /*if(_verify_)
-       {
-	 {
-	   std::ostringstream outs_beta;
-	   outs_beta << "data/dbd_gA/" << _nuclide_ << '/' << process_label(_process_) << '/'
-		     << "Beta.data";
-	   _tabulated_beta_file_path_ = outs_beta.str();
-	   std::string fres_beta = get_resource(_tabulated_beta_file_path_, true);
-	   _tabulated_beta_file_path_ = fres_beta;
-	 }
-
-	 std::ifstream f_tab_beta(_tabulated_beta_file_path_.c_str());
-	 if (! f_tab_beta) {
-	   throw std::logic_error("bxdecay0::dbd_gA::_load_tabulated_pdf_: Cannot open beta file '"
-				  + _tabulated_beta_file_path_ + "'!");
-	 }
-	 while(f_tab_beta){
-	 std::string raw_line;
-	 std::getline(f_tab_beta, raw_line);
-      
-	 if (debug) {
-	   std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: raw_line = <" << raw_line << '>' << std::endl;
-	 }
-	 if (raw_line.size() == 0) {
-	   if (debug) {
-	     std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip blank line." << std::endl;
-	   }
-	   continue;
-	 }
-	 {
-	   std::string first_word;
-	   std::istringstream ins(raw_line);
-	   ins >> first_word;
-	   if (first_word[0] == '#') {
-	     if (debug) {
-	       std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip comment line." << std::endl;
-	     }
-	     continue;
-	   }
-	 }
-	 while(f_tab_beta){
-	   std::getline(f_tab_beta, raw_line);
-	   std::istringstream line_ins(raw_line);
-	   {
-	     std::string first_word;
-	     std::istringstream ins(raw_line);
-	     ins >> first_word;
-	     if (first_word[0] == '#') {
-	       if (debug) {
-		 std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: Skip comment line." << raw_line<< std::endl;
-	       }
-	       continue;
-	     }
-	   }
-	   std::vector<double> args;
-	   std::vector<double> front_back;
-	   for(;line_ins >> line;){
-	     if(count == 0)
-	       _pimpl_->tab_pdf.energies.push_back(atof(line.c_str()));
-
-	     else args.push_back(atof(line.c_str()));
-	   }
-	   count++;
-	   if(count == 1) continue;
-	   front_back.push_back(args.front());
-	   front_back.push_back(args.back());
-	   _pimpl_->tab_pdf.bound.push_back(front_back);
-
-	   _pimpl_->tab_pdf.save_probability.push_back(args);
-	
-
-	   if (f_tab_pdf.eof()) {
-	     if (debug) {
-	       std::cerr << "[debug] bxdecay0::dbd_gA::_load_tabulated_probability_: End of parsing input." << std::endl;
-	     }
-	     break;
-	   }
-	 }
-       }
-       }*/
-       
      return;
   }
    
@@ -760,7 +678,6 @@ namespace bxdecay0 {
     static const double emass = decay0_emass(); //MeV
     static const double PI = 3.14159265;
     static const double twopi = 2. * PI;
-    
     double p1 = std::sqrt(e1_ * (e1_ + 2. * emass));
     double p2 = std::sqrt(e2_ * (e2_ + 2. * emass));
     double b1 = p1 / (e1_ + emass);
@@ -779,12 +696,14 @@ namespace bxdecay0 {
       ctet1 = 1. - 2. * prng_();
       stet1 = std::sqrt(1. - ctet1 * ctet1);
       phi2 = twopi * prng_();
-     ctet2 = 1. - 2. * prng_();
+      ctet2 = 1. - 2. * prng_();
       stet2 = std::sqrt(1. - ctet2 * ctet2);
-      cos12_ =ctet1 * ctet2 + stet1 * stet2 * std::cos(phi1 - phi2);
+      cos12_ = ctet1 * ctet2 + stet1 * stet2 * std::cos(phi1 - phi2);
     }
     while (romaxt * prng_() > a + b * cos12_ + c * std::pow(cos12_,2));
     
+    _pimpl_->tab_pdf.beta =+ b1*b2*_pimpl_->tab_pdf.proba;
+    _pimpl_->tab_pdf.sum_proba =+_pimpl_->tab_pdf.proba;
     // Clear the target event
     ev1_.reset();
     ev1_.set_generator("dbd_gA"); // Useful information (not mandatory)
@@ -844,15 +763,15 @@ namespace bxdecay0 {
 	      if((rand - _pimpl_->tab_pdf.bound[i][0] <= 5* pow(10,-7))){
 		e1_ = _pimpl_->tab_pdf.energies[i];
 		e2_ = _pimpl_->tab_pdf.energies[0];
-	      std::cout <<  _pimpl_->tab_pdf.energies[i] << "  " << _pimpl_->tab_pdf.energies[0] << " bounds " << rand << "  " <<  _pimpl_->tab_pdf.bound[i][0] <<  std::endl;
-	      count ++;
+		_pimpl_->tab_pdf.proba = rand;
+		count ++;
 	      _pimpl_->tab_pdf.iteration++;
 	      break;
 	      }
 	      else if((rand - _pimpl_->tab_pdf.bound[i][1] <=  5*pow(10,-7))){
 		e1_ =  _pimpl_->tab_pdf.energies[i];
 		e2_ =  _pimpl_->tab_pdf.energies[_pimpl_->tab_pdf.save_probability[i].size()-1];
-		std::cout <<  _pimpl_->tab_pdf.energies[i] << "  " <<  _pimpl_->tab_pdf.energies[_pimpl_->tab_pdf.save_probability[i].size()-1] << " bounds " << rand << "  " <<  _pimpl_->tab_pdf.bound[i][1] <<  std::endl;
+		_pimpl_->tab_pdf.proba = rand;
 		count ++;
 		_pimpl_->tab_pdf.iteration++;
 
@@ -876,7 +795,7 @@ namespace bxdecay0 {
 		  {
 		    e1_ =  _pimpl_->tab_pdf.energies[i_iter];
 		    e2_ =  _pimpl_->tab_pdf.energies[j_iter];
-		    std::cout <<   _pimpl_->tab_pdf.energies[i_iter] << "  " <<   _pimpl_->tab_pdf.energies[j_iter] << "  RAND = "<< rand<< "  "  << _pimpl_->tab_pdf.save_probability[i_iter][j_iter]  <<  std::endl;
+		    _pimpl_->tab_pdf.proba = _pimpl_->tab_pdf.save_probability[i_iter][j_iter];
 		    _pimpl_->tab_pdf.iteration++;
 		    count ++;
 		    break;
@@ -887,7 +806,7 @@ namespace bxdecay0 {
 	    if(count !=0) break;
 	    }
     
-    std::cout << "count = " << count << "  iteration = " <<  _pimpl_->tab_pdf.iteration << std::endl;
+    //std::cout << "count = " << count << "  iteration = " <<  _pimpl_->tab_pdf.iteration << std::endl;
 
   }
   
