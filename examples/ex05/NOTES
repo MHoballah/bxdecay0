@@ -1,3 +1,0 @@
-Prob_sum files + beta file are specific for the checking of validity of code. these files are connected to Se82 GO process.
-Analysis.cc is a c++ macro using root.
-These files might be implimented inside the software, and for each isotope and process.

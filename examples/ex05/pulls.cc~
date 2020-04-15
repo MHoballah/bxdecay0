@@ -1,0 +1,182 @@
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <vector>
+#include <string>
+
+#include <TROOT.h>
+#include <TStyle.h>
+#include <TH1F.h>
+#include <TF1.h>
+#include <TCanvas.h>
+#include <TStyle.h>
+#include <TGraphErrors.h>
+
+void analysis()
+{
+  ifstream InputFile_beta, InputFile_E1, InputFile_E2, InputFile_sum;
+  InputFile_E1.open ("Prob_sum_E1.data");
+  InputFile_E2.open ("Prob_sum_E2.data");
+  InputFile_sum.open("Energy_sum.data");
+  InputFile_beta.open ("Beta.data");
+  if(InputFile_beta.is_open())
+    cout << "Files Opened Succefully! " << endl;
+  else cerr << " Problem Openening Files!" << endl;
+  
+ TH1F *beta_plot = new TH1F("beta", "beta1*beta2", 100,-1,1);
+  beta_plot->Sumw2();
+  TH1D *en_1 = new TH1D("E1", " all E1 values", 100, 0, 3);
+  en_1->Sumw2();
+  TH1D *en_2 = new TH1D("E2", " all E2 values", 100, 0, 3);
+  en_2->Sumw2();
+  TH1D *en_sum = new TH1D("Esum", "Esum", 100, 0,3);
+  en_sum->Sumw2();
+
+
+  TH1D *pull_e1 = new TH1D("Pull e1", "Pull e1", 100, -10, 10);
+  TH1D *pull_e2 = new TH1D("Pull e2", "Pull e2", 100, -10, 10);
+  TH1D *pull_esum = new TH1D("Pull esum", "Pull esum", 100, -10, 10);
+  pull_e1->Sumw2();
+  pull_e2->Sumw2();
+  pull_esum->Sumw2();
+  
+
+  double e1, e2, esum, prob_1, prob_2, proba, beta1, beta2, beta_add = 0, proba_add = 0;
+  unsigned int beta_count = 0, counts = 0;
+  
+  while(InputFile_beta.good())
+    {
+      InputFile_beta >> beta1 >> beta2 >> proba;
+      beta_add = beta_add + beta1*beta2*proba;
+      proba_add = proba_add + proba;
+      beta_count ++;
+      }
+
+  TF1 *beta_ft = new TF1("beta_ft", "1-[0]*x", -1, 1);
+  double para = beta_add/proba_add;
+  cout << " fit " << beta_add/proba_add << "  " << beta_count<< endl;
+  beta_ft->SetParameter(0,para);
+  beta_plot->FillRandom("beta_ft", 5000);
+ 
+  while(InputFile_E1.good()){
+    InputFile_E1 >> e1 >> prob_1;
+    en_1->Fill(e1,prob_1);
+    InputFile_E2 >> e2 >> prob_2;
+    en_2->Fill(e2, prob_2);
+    counts++;
+    }
+  cout << " count " << counts << endl;
+  while(InputFile_sum.good()){
+    InputFile_sum >> esum >> prob_1;
+    en_sum->Fill(esum,prob_1);
+  }
+
+  TH1D *e_1;
+  TH1D *e_2;
+  TH1D *e_sum;
+  TH1D *cos_12;
+  
+  TFile *rootFile = new TFile("data_plots.root", "READ");
+  TFile *pull = new TFile("pull_distributions.root", "UPDATE");
+
+  for( int iter=1; iter <= 5; iter++){
+
+    
+  char hist_num[20];
+  sprintf(hist_num,"simulated E1;%i", iter);
+  e_1 = (TH1D*)rootFile->Get(hist_num);
+  sprintf(hist_num,"simulated E2;%i", iter);
+  e_2 = (TH1D*)rootFile->Get(hist_num);
+  sprintf(hist_num,"simulated Esum;%i", iter);
+  e_sum = (TH1D*)rootFile->Get(hist_num);
+  sprintf(hist_num,"cos12;%i", iter);
+  cos_12 = (TH1D*)rootFile->Get(hist_num);
+
+  e_1->Scale(1.0/e_1->Integral());
+  en_1->Scale(1.0/en_1->Integral());
+  e_2->Scale(1.0/e_2->Integral());
+  en_2->Scale(1.0/en_2->Integral());
+  e_sum->Scale(1.0/e_sum->Integral());
+  en_sum->Scale(1.0/en_sum->Integral());
+
+  /*//TCanvas *plots = new TCanvas("plots", "plots");
+  //gStyle->SetOptStat("nemr");
+  //gStyle->SetOptFit(1111);
+ 
+  //plots->Divide(2,2);
+  //plots->cd(1);
+  //rootFile->FindObject("simulated E1;2")->Draw();
+  e_1->SetXTitle("E1 [MeV]");
+  e_1->SetYTitle("Count");
+  //e_1->Draw();
+  en_1->SetLineColor(kRed);
+  //en_1->Draw("same");
+  auto legend = new TLegend(0.1,0.7,0.4,0.9);
+  legend->AddEntry(e_1,"Simulated E1 values","lep");
+  legend->AddEntry(en_1,"Full E1 data set weighted by probability","lep");
+  legend->Draw();
+  //plots->cd(2);
+  e_2->SetXTitle("E2 [MeV]");
+  e_2->SetYTitle("Count");
+  //e_2->Draw();
+  en_2->SetLineColor(kRed);
+  //en_2->Draw("same");
+  auto legend1 = new TLegend(0.1,0.7,0.4,0.9);
+  legend1->AddEntry(e_2,"Simulated E2 values","lep");
+  legend1->AddEntry(en_2,"Full E2 data set weighted by probability","lep");
+  legend1->Draw();
+  // plots->cd(3);
+  e_sum->SetXTitle("E1 + E2 [MeV]");
+  e_sum->SetYTitle("Count");
+  //e_sum->Draw();
+  en_sum->SetLineColor(kRed);
+  //en_sum->Draw("same");
+  auto legend2 = new TLegend(0.1,0.7,0.4,0.9);
+  legend2->AddEntry(e_1,"Simulated E1+E2 values","lep");
+  legend2->AddEntry(en_1,"Full E1+E2 data set weighted by probability","lep");
+  legend2->Draw();
+  //plots->cd(4);
+  cos_12->SetXTitle("cos12");
+  cos_12->SetYTitle("Count");
+  cos_12->Scale(1.0/cos_12->Integral());
+  //cos_12->Draw();
+  beta_plot->SetLineColor(kRed);
+  beta_plot->Scale(1.0/beta_plot->Integral());
+  //beta_plot->Draw("same");
+  auto legend3 = new TLegend(0.1,0.7,0.4,0.9);
+  legend3->AddEntry(cos_12,"Simulated angle values","lep");
+  legend3->AddEntry(beta_plot,"1-<b1*b2>*x","lep");
+  legend3->Draw();*/
+ 
+
+  //TCanvas *pull_plot = new TCanvas("pull ", "pull ");
+
+
+
+  for(int i=0; i< e_1->GetNbinsX(); i++){
+    pull_e1->Fill((e_1->GetBinContent(i)-en_1->GetBinContent(i))/e_1->GetBinError(i));
+    pull_e2->Fill((e_2->GetBinContent(i)-en_2->GetBinContent(i))/e_2->GetBinError(i));
+    pull_esum->Fill((e_sum->GetBinContent(i)-en_sum->GetBinContent(i))/e_sum->GetBinError(i));
+    //pull_cos->Fill((cos_12->GetBinContent(i)-beta_plot->GetBinContent(i))/cos_12->GetBinError(i));
+  }
+  cout << "here" << endl;
+
+  pull_e1->Write();
+  pull_e2->Write();
+  pull_esum->Write();
+
+  pull_e1->Reset();
+  pull_e2->Reset();
+  pull_esum->Reset();
+  /*pull_plot->Divide(2,2);
+  //pull->SetXTitle("");
+  pull_plot->cd(1);
+  pull_e1->Draw();
+  pull_plot->cd(2);
+  pull_e2->Draw();
+  pull_plot->cd(3);
+  pull_esum->Draw();
+  pull_plot->cd(4);*/
+  //pull_cos->Draw();
+  }
+}

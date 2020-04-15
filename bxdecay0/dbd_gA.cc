@@ -580,7 +580,10 @@ namespace bxdecay0 {
 	_pimpl_->tab_pdf.bound.push_back(front_back);
 
 	_pimpl_->tab_pdf.save_probability.push_back(args);
-	
+
+	_pimpl_->tab_pdf.e_nsamples[0] =  _pimpl_->tab_pdf.energies.size();
+	_pimpl_->tab_pdf.e_nsamples[1] =  _pimpl_->tab_pdf.bound.size();
+	_pimpl_->tab_pdf.prob_max = _pimpl_->tab_pdf.bound[_pimpl_->tab_pdf.bound.size()-1][1];
 
 	if (f_tab_pdf.eof()) {
 	  if (debug) {
@@ -674,7 +677,7 @@ namespace bxdecay0 {
   }
 
   void dbd_gA::shoot_cos_theta(i_random & prng_, const double e1_, const double e2_, double & cos12_, event & ev1_)
-  { 
+  {
     static const double emass = decay0_emass(); //MeV
     static const double PI = 3.14159265;
     static const double twopi = 2. * PI;
@@ -701,7 +704,7 @@ namespace bxdecay0 {
       cos12_ = ctet1 * ctet2 + stet1 * stet2 * std::cos(phi1 - phi2);
     }
     while (romaxt * prng_() > a + b * cos12_ + c * std::pow(cos12_,2));
-    
+    if(isnan(e1_) || isnan(e2_) )std::cout << " cos12 = " << cos12_ << " e = " << e1_ << "  " << e2_ << std::endl;
     _pimpl_->tab_pdf.beta =+ b1*b2*_pimpl_->tab_pdf.proba;
     _pimpl_->tab_pdf.sum_proba =+_pimpl_->tab_pdf.proba;
     // Clear the target event
@@ -758,12 +761,26 @@ namespace bxdecay0 {
     int count =0;
     for(unsigned int i=0; i< _pimpl_->tab_pdf.bound.size(); i++)
 	  {
-	    if((fabs(rand - _pimpl_->tab_pdf.bound[i][0]) <= 5*pow(10,-7)) ||( fabs(rand - _pimpl_->tab_pdf.bound[i][1])<= 5*pow(10,-7)))
+	    if(rand < _pimpl_->tab_pdf.bound[0][0]){
+	      e1_ = _pimpl_->tab_pdf.energies[0];
+	      e2_ = _pimpl_->tab_pdf.energies[0];
+	      _pimpl_->tab_pdf.proba = rand;
+	      if(isnan(e1_) || isnan(e2_))
+		{std::cout << "bound00  " << rand << "  " << _pimpl_->tab_pdf.save_probability[0][0] <<"   " << e1_ << "  " << e2_ << "  " << _pimpl_->tab_pdf.iteration << std::endl;
+		  throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: error in coding!");}
+	      count ++;
+	      _pimpl_->tab_pdf.iteration++;
+	      break;
+	    }
+	    else if((fabs(rand - _pimpl_->tab_pdf.bound[i][0]) <= 5*pow(10,-7)) ||( fabs(rand - _pimpl_->tab_pdf.bound[i][1])<= 5*pow(10,-7)))
 	    {
 	      if((rand - _pimpl_->tab_pdf.bound[i][0] <= 5* pow(10,-7))){
 		e1_ = _pimpl_->tab_pdf.energies[i];
 		e2_ = _pimpl_->tab_pdf.energies[0];
 		_pimpl_->tab_pdf.proba = rand;
+		if(isnan(e1_) || isnan(e2_))
+		  {std::cout << "bound0  " << rand << "  " << _pimpl_->tab_pdf.save_probability[i][0] << "   " << e1_ << "  " << e2_ << "  " << _pimpl_->tab_pdf.iteration << std::endl;
+		    throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: error in coding!");}
 		count ++;
 	      _pimpl_->tab_pdf.iteration++;
 	      break;
@@ -772,18 +789,20 @@ namespace bxdecay0 {
 		e1_ =  _pimpl_->tab_pdf.energies[i];
 		e2_ =  _pimpl_->tab_pdf.energies[_pimpl_->tab_pdf.save_probability[i].size()-1];
 		_pimpl_->tab_pdf.proba = rand;
+		if(isnan(e1_) || isnan(e2_))
+		  {std::cout << "bound1 " <<  rand << "  " << _pimpl_->tab_pdf.save_probability[i][_pimpl_->tab_pdf.save_probability[i].size()-1] <<"  " <<  e1_ << "  " << e2_ << "  " << _pimpl_->tab_pdf.iteration << std::endl;
+		    throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: error in coding!");}
 		count ++;
 		_pimpl_->tab_pdf.iteration++;
-
 		break;
 	      }
 	      else  throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: An error in selection!");
 
 	      }
 	    else if ((rand > _pimpl_->tab_pdf.bound[i][0] && rand < _pimpl_->tab_pdf.bound[i][1])){
-	      double diff = fabs(rand - _pimpl_->tab_pdf.save_probability[i][0]);
-	      double p1 = _pimpl_->tab_pdf.save_probability[i][0];
-	      unsigned int i_iter, j_iter;
+	      unsigned int i_iter=i, j_iter=0;
+	      double diff = fabs(rand - _pimpl_->tab_pdf.save_probability[i_iter][j_iter]);
+	      double p1 = _pimpl_->tab_pdf.save_probability[i_iter][j_iter];
 	      for(unsigned int j=1; j< _pimpl_->tab_pdf.save_probability[i].size(); j++){
 		if ( fabs(rand - _pimpl_->tab_pdf.save_probability[i][j]) < diff){
 		  diff =fabs(rand - _pimpl_->tab_pdf.save_probability[i][j]);
@@ -798,13 +817,55 @@ namespace bxdecay0 {
 		    _pimpl_->tab_pdf.proba = _pimpl_->tab_pdf.save_probability[i_iter][j_iter];
 		    _pimpl_->tab_pdf.iteration++;
 		    count ++;
+		    if(isnan(e1_) || isnan(e2_)){std::cout << "iter "<<rand << "  " << _pimpl_->tab_pdf.save_probability[i_iter][j_iter] <<  "  " << i_iter << "  " << j_iter << "  " << e1_ << "  " << e2_<< "  "<< _pimpl_->tab_pdf.iteration << std::endl;
+		      throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: error in coding!");}
 		    break;
 		  }
 		else continue;
 	      }
+	      }
+	    else if(i != _pimpl_->tab_pdf.bound.size() -1 ){
+	      if(rand > _pimpl_->tab_pdf.bound[i][1] && rand < _pimpl_->tab_pdf.bound[i+1][0]){
+		if((rand - _pimpl_->tab_pdf.bound[i][1]) < (rand -  _pimpl_->tab_pdf.bound[i+1][0])){
+		e1_ =  _pimpl_->tab_pdf.energies[i];
+		e2_ =  _pimpl_->tab_pdf.energies[_pimpl_->tab_pdf.save_probability[i].size()-1];
+		_pimpl_->tab_pdf.proba = _pimpl_->tab_pdf.save_probability[i][_pimpl_->tab_pdf.save_probability[i].size()-1];
+		_pimpl_->tab_pdf.iteration++;
+		if(isnan(e1_) || isnan(e2_)){std::cout << " inbtwn1 " << rand << "  " << _pimpl_->tab_pdf.save_probability[i][_pimpl_->tab_pdf.save_probability[i].size()-1] << "  " <<  e1_ << "  " << e2_<< "  "  << _pimpl_->tab_pdf.iteration<< std::endl;
+		  throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: error in coding!");}
+ 		count ++;
+		break;
+	      }else if(rand - _pimpl_->tab_pdf.bound[i][1] > rand - _pimpl_->tab_pdf.bound[i+1][0]){
+		e1_ =  _pimpl_->tab_pdf.energies[i+1];
+		e2_ =  _pimpl_->tab_pdf.energies[0];
+		_pimpl_->tab_pdf.proba = _pimpl_->tab_pdf.save_probability[i+1][0];
+		if(isnan(e1_) || isnan(e2_)){std::cout << "inbtwn0 " <<rand << "  " << _pimpl_->tab_pdf.save_probability[i+1][0] << "   " << e1_ << "  " << e2_<< "  " << _pimpl_->tab_pdf.iteration << std::endl;
+		  throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: error in coding!");}
+		_pimpl_->tab_pdf.iteration++;
+		count ++;
+		break;
+	      }
+	    }
+	  }
+	    else if(i == _pimpl_->tab_pdf.bound.size() -1){
+	      if(rand > _pimpl_->tab_pdf.bound[i][1]){
+		e1_ =  _pimpl_->tab_pdf.energies[i];
+		e2_ =  _pimpl_->tab_pdf.energies[_pimpl_->tab_pdf.save_probability[i].size()-1];
+		_pimpl_->tab_pdf.proba = _pimpl_->tab_pdf.save_probability[i][_pimpl_->tab_pdf.save_probability[i].size()-1];
+		if(isnan(e1_) || isnan(e2_)){std::cout << "last " << rand << "  " << _pimpl_->tab_pdf.save_probability[i][_pimpl_->tab_pdf.save_probability[i].size()-1] <<"   " <<  e1_ << "  " << e2_ << "  "  << i<< "  " << _pimpl_->tab_pdf.save_probability[i].size()-1<< "   "<< _pimpl_->tab_pdf.iteration << std::endl;
+		  throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: error in coding!");}
+		_pimpl_->tab_pdf.iteration++;
+		count ++;
+		break;
+	      }
 	    }
 	    if(count !=0) break;
 	    }
+    if(isnan(e1_) || isnan(e2_)){std::cout << "NAN " << rand << "  " << e1_ << "  " << e2_ << "  "  << _pimpl_->tab_pdf.iteration << std::endl;
+      throw std::logic_error("bxdecay0::dbd_gA::_shoot_inverse_transform_method_: error in coding!");}
+	    if(_pimpl_->tab_pdf.iteration % 1000000 == 0) std::cout << _pimpl_->tab_pdf.iteration << std::endl;
+    //std::cout << "Rand that generated nan values = " << rand << std::endl;
+
     
     //std::cout << "count = " << count << "  iteration = " <<  _pimpl_->tab_pdf.iteration << std::endl;
 
