@@ -11,22 +11,22 @@
 
 int main()
 {
-  unsigned int seed = 314159;
-  std::default_random_engine generator(seed);
+  std::random_device rd;
+  std::default_random_engine generator(rd());
   bxdecay0::std_random prng(generator);
   
   bxdecay0::dbd_gA gA_generator;
-  gA_generator.set_nuclide("Se");
+  gA_generator.set_nuclide("Se82");
   gA_generator.set_process(bxdecay0::dbd_gA::PROCESS_G0);
   gA_generator.set_shooting(bxdecay0::dbd_gA::SHOOTING_INVERSE_TRANSFORM_METHOD);
   gA_generator.initialize();
-  gA_generator.print(std::clog, "gA DBD generator", "[info] ");
+  //gA_generator.print(std::clog, "gA DBD generator", "[info] ");
 
-  {
+  /*{
     std::ofstream fout1("bxdecay0_ex05_1.data");
     gA_generator.plot_interpolated_pdf(fout1, 20);
     fout1 << std::endl;
-  }
+    }*/
   
   {
     std::ofstream fout2("bxdecay0_ex05_2.data");
